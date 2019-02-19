@@ -1,0 +1,19 @@
+plugins {
+    id 'org.spongepowered.plugin' version '0.8.1'
+}
+
+group = pluginGroup
+version = pluginVersion
+
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    compile 'org.spongepowered:spongeapi:7.1.0-SNAPSHOT'
+    //implementation 'com.github.codeHusky:HuskyUI-Plugin:v0.6.0-PRE2-HOTFIX2'
+    compile "com.github.SimonFlash.TeslaPowered:TeslaLibs:v1.1.6"
+    compile 'org.xerial:sqlite-jdbc:3.23.1'
+}
+
+sponge.plugin.id = pluginId
