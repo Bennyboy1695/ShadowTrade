@@ -54,7 +54,7 @@ public class ShadowTrades {
         new InventoryUtils(this);
 
         //Database
-        logger.info("Loading SQLLite Storage");
+        logger.info("Loading SQLLite Storage")
         sqlManager = new SQLManager(this,"Trades", "trades", "failedStacks");
 
         logger.info("Loading Trades");
