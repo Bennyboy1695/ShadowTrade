@@ -158,11 +158,12 @@ public class TradeCommand {
                         plugin.getLogger().info("Player: " + player.getName() + " made a successful trade of id: " + tradeID);
                         player.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.successfulTradeMessage));
                     } else {
-                        plugin.getLogger().info("Player: " + player.getName() + " made a successful trade but couldnt receive all items of id: " + tradeID);
+                        plugin.getLogger().info("Player: " + player.getName() + " made a successful trade but couldn't receive all items of id: " + tradeID);
                         player.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.failedToGiveItemsMessage));
                         if (!tradeResult.getSecond().isEmpty())
                             plugin.getSqlManager().addNewFailedTrade(player, tradeResult.getSecond());
                     }
+                    tradingGUI(player, tradeID);
                 }).build();
             } else {
                 lore.add(Text.of(Text.of(TextColors.AQUA, "You still need: ")));
@@ -217,7 +218,6 @@ public class TradeCommand {
                 count++;
             }
         }
-        player.closeInventory();
         return new Tuple<>(count == toGive.size(), failedStacks);
     }
 
