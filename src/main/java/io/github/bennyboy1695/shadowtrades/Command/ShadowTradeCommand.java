@@ -96,7 +96,6 @@ public class ShadowTradeCommand {
                requiredInv.listener(InteractInventoryEvent.Close.class, close1 -> {
                    if (close1.getTargetInventory().getInventoryProperty(InventoryTitle.class).get().equals(requiredTitle)) {
                        HashMap<Integer, ItemStack> invMapped = removePlayerAndPanes(close1.getTargetInventory());
-                       invMapped.forEach((i,s) -> {System.out.println(s.toString());});
                        if (invMapped.size() < 13) {
                            ArrayList<ItemStack> stacks = new ArrayList<>();
                            for (Map.Entry<Integer, ItemStack> entry : invMapped.entrySet()) {

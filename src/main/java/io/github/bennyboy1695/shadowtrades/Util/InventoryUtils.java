@@ -91,7 +91,7 @@ public class InventoryUtils {
             try {
                 itemStacks.add(deserializeItemStack(parser.parse(string).getAsJsonObject()).get());
             } catch (JsonSyntaxException e) {
-                System.out.println(string);
+                System.out.println(e + string);
             }
         }
         return itemStacks;
