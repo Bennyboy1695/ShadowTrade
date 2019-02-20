@@ -11,7 +11,6 @@ repositories {
 
 dependencies {
     compile 'org.spongepowered:spongeapi:5.1.0-SNAPSHOT'
-    //implementation 'com.github.codeHusky:HuskyUI-Plugin:v0.6.0-PRE2-HOTFIX2'
     compile "com.github.SimonFlash.TeslaPowered:TeslaLibs:v1.1.6"
     compile 'org.xerial:sqlite-jdbc:3.23.1'
 }
