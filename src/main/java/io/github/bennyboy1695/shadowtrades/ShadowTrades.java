@@ -14,6 +14,7 @@ import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
+import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.service.pagination.PaginationService;
@@ -21,7 +22,7 @@ import org.spongepowered.api.service.pagination.PaginationService;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-@Plugin(id = "shadowtrades", name = "ShadowTrades", description = "A trade plugin that allows you to give an item in exchange for another.", authors = {"Bennyboy1695"})
+@Plugin(id = "shadowtrades", name = "ShadowTrades", description = "A trade plugin that allows you to give an item in exchange for another.", authors = {"Bennyboy1695"}, dependencies = @Dependency(id = "teslalibs"))
 public class ShadowTrades {
 
     @Inject
