@@ -150,8 +150,8 @@ public class TradeCommand {
             ItemStack finisher;
             Element doTrade;
             if (trueCount.size() == convertedRequired.size()) {
-                finisher = ItemStack.builder().itemType(ItemTypes.WOOL).add(Keys.DYE_COLOR, DyeColors.GREEN).add(Keys.DISPLAY_NAME, TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.displayNames.successTradeFinishDisplay)).add(Keys.ITEM_LORE, lore).build();
                 Trade finalTrade = trade;
+                finisher = ItemStack.builder().itemType(ItemTypes.WOOL).quantity().add(Keys.DYE_COLOR, DyeColors.GREEN).add(Keys.DISPLAY_NAME, TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.displayNames.successTradeFinishDisplay)).add(Keys.ITEM_LORE, lore).build();
                 doTrade = Element.builder().item(finisher).onClick(action -> {
                     Tuple<Boolean, ArrayList<ItemStack>> tradeResult = doTrade(finalTrade, player);
                     if (tradeResult.getFirst()) {
@@ -219,5 +219,16 @@ public class TradeCommand {
         }
         player.closeInventory();
         return new Tuple<>(count == toGive.size(), failedStacks);
+    }
+
+    private static int getMakeableTradesCount(Trade trade, Player player) {
+        ArrayList<ItemStack> required = InventoryUtils.convertJsonArrayToItemArray(trade.getRequiredItems());
+
+        for (ItemStack stack : required) {
+            if (player.getInventory().contains(stack)) {
+                int playerQuantity = player.getInventory().queryAny(stack).peek().get().getQuantity() / stack.getQuantity();
+            }
+        }
+        return 0;
     }
 }
