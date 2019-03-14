@@ -31,6 +31,7 @@ import org.spongepowered.api.util.rotation.Rotations;
 
 import java.util.*;
 
+@SuppressWarnings("Duplicates")
 public class TradeCommand {
 
     private static ShadowTrades plugin;
@@ -219,5 +220,13 @@ public class TradeCommand {
             }
         }
         return new Tuple<>(count == toGive.size(), failedStacks);
+    }
+
+    private static int getMakeableTradesCount(Trade trade, Player player) {
+        ArrayList<ItemStack> required = InventoryUtils.convertJsonArrayToItemArray(trade.getRequiredItems());
+        int max = 0;
+        for (ItemStack stack : required)
+            max = Math.min(max, (int) Math.floor(player.getInventory().queryAny(stack).peek().get().getQuantity() / (double) stack.getQuantity()));
+        return max;
     }
 }
