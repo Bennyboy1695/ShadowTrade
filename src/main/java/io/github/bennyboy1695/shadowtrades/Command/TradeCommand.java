@@ -3,6 +3,7 @@ package io.github.bennyboy1695.shadowtrades.Command;
 import com.mcsimonflash.sponge.teslalibs.inventory.Element;
 import com.mcsimonflash.sponge.teslalibs.inventory.Layout;
 import com.mcsimonflash.sponge.teslalibs.inventory.Page;
+import com.mcsimonflash.sponge.teslalibs.inventory.View;
 import io.github.bennyboy1695.shadowtrades.ShadowTrades;
 import io.github.bennyboy1695.shadowtrades.Util.InventoryUtils;
 import io.github.bennyboy1695.shadowtrades.Util.Trade;
@@ -30,14 +31,17 @@ import org.spongepowered.api.util.Tuple;
 import org.spongepowered.api.util.rotation.Rotations;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
-@SuppressWarnings("Duplicates")
 public class TradeCommand {
 
     private static ShadowTrades plugin;
     private static Element border = Element.builder().item(ItemStack.builder().itemType(ItemTypes.STAINED_GLASS_PANE).add(Keys.DYE_COLOR, DyeColors.BLACK).build()).build();
     private static InventoryDimension dimension = InventoryDimension.of(9, 6);
     private static InventoryArchetype archetype = InventoryArchetypes.DOUBLE_CHEST;
+    private static int times = 0;
+    private static int finalTimes = 0;
+    private static String finalTradeID;
 
     public TradeCommand(ShadowTrades plugin) {
         this.plugin = plugin;
@@ -150,20 +154,39 @@ public class TradeCommand {
             List<Text> lore = new ArrayList<>();
             ItemStack finisher;
             Element doTrade;
+            if (times > getMakeableTradesCount(trade, player) || times == 0 || !finalTradeID.equals(tradeID)) {
+                times = getMakeableTradesCount(trade, player);
+                finalTradeID = trade.getId();
+            }
+            if (finalTimes > getMakeableTradesCount(trade, player) || finalTimes == 0 || !finalTradeID.equals(tradeID)) {
+                finalTimes = times;
+                finalTradeID = trade.getId();
+            }
             if (trueCount.size() == convertedRequired.size()) {
-                finisher = ItemStack.builder().itemType(ItemTypes.WOOL).add(Keys.DYE_COLOR, DyeColors.GREEN).add(Keys.DISPLAY_NAME, TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.displayNames.successTradeFinishDisplay)).add(Keys.ITEM_LORE, lore).build();
+                finisher = ItemStack.builder().itemType(ItemTypes.WOOL).quantity(times).add(Keys.DYE_COLOR, DyeColors.GREEN).add(Keys.DISPLAY_NAME, TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.displayNames.successTradeFinishDisplay)).add(Keys.ITEM_LORE, lore).build();
                 Trade finalTrade = trade;
                 doTrade = Element.builder().item(finisher).onClick(action -> {
-                    Tuple<Boolean, ArrayList<ItemStack>> tradeResult = doTrade(finalTrade, player);
-                    if (tradeResult.getFirst()) {
-                        plugin.getLogger().info("Player: " + player.getName() + " made a successful trade of id: " + tradeID);
-                        player.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.successfulTradeMessage));
-                    } else {
+                    int successCount = 0;
+                    int failCount = 0;
+                    for (int i = 0; i < times; i++) {
+                        Tuple<Boolean, ArrayList<ItemStack>> tradeResult = doTrade(finalTrade, player);
+                        if (tradeResult.getFirst()) {
+                            successCount++;
+                        } else {
+                            failCount++;
+                            if (!tradeResult.getSecond().isEmpty())
+                                plugin.getSqlManager().addNewFailedTrade(player, tradeResult.getSecond());
+                        }
+                    }
+                    if (successCount != 0) {
+                        plugin.getLogger().info("Player: " + player.getName() + " made " + successCount + " successful trades of id: " + tradeID);
+                        player.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.successfulTradeMessage.replace("<count>", String.valueOf(successCount))));
+                    }
+                    if (failCount != 0) {
                         plugin.getLogger().info("Player: " + player.getName() + " made a successful trade but couldn't receive all items of id: " + tradeID);
                         player.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.failedToGiveItemsMessage));
-                        if (!tradeResult.getSecond().isEmpty())
-                            plugin.getSqlManager().addNewFailedTrade(player, tradeResult.getSecond());
                     }
+                    tradingGUI(player, tradeID); //Do it twice to fix bugs
                     tradingGUI(player, tradeID);
                 }).build();
             } else {
@@ -177,9 +200,35 @@ public class TradeCommand {
                     player.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.failedTradeMessage));
                 }).build();
             }
+            Element minus1 = Element.builder().item(ItemStack.builder().itemType(ItemTypes.STAINED_GLASS).add(Keys.DYE_COLOR, DyeColors.BROWN).add(Keys.DISPLAY_NAME, TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.displayNames.minusOneDisplay)).add(Keys.ITEM_LORE, Arrays.asList(Text.of(TextColors.AQUA, "This will reduce your current trade amount by 1!"))).build()).onClick((click) -> {
+                times = times - 1;
+                tradingGUI(player, tradeID);}).build();
+            Element minus10 = Element.builder().item(ItemStack.builder().itemType(ItemTypes.STAINED_GLASS).add(Keys.DYE_COLOR, DyeColors.RED).add(Keys.DISPLAY_NAME, TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.displayNames.minusTenDisplay)).add(Keys.ITEM_LORE, Arrays.asList(Text.of(TextColors.AQUA, "This will reduce your current trade amount by 10!"))).build()).onClick((click) -> {
+                times = times - 10;
+                tradingGUI(player, tradeID);}).build();
+            Element plus1 = Element.builder().item(ItemStack.builder().itemType(ItemTypes.STAINED_GLASS).add(Keys.DYE_COLOR, DyeColors.LIME).add(Keys.DISPLAY_NAME, TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.displayNames.plusOneDisplay)).add(Keys.ITEM_LORE, Arrays.asList(Text.of(TextColors.AQUA, "This will increase your current trade amount by 1!"))).build()).onClick((click) -> {
+                times = times + 1;
+                tradingGUI(player, tradeID);}).build();
+            Element plus10 = Element.builder().item(ItemStack.builder().itemType(ItemTypes.STAINED_GLASS).add(Keys.DYE_COLOR, DyeColors.GREEN).add(Keys.DISPLAY_NAME, TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.displayNames.plusTenDisplay)).add(Keys.ITEM_LORE, Arrays.asList(Text.of(TextColors.AQUA, "This will increase your current trade amount by 10!"))).build()).onClick((click) -> {
+                times = times + 10;
+                tradingGUI(player, tradeID);}).build();
 
             layout.set(doTrade, 49);
-            layout.set(Element.builder().item(ItemStack.builder().itemType(ItemTypes.ARROW).add(Keys.ROTATION, Rotations.BOTTOM).add(Keys.DISPLAY_NAME, TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.displayNames.inTradeMenuReturnDisplay)).build()).onClick(action -> mainTradingGui(player)).build(), 4);
+            if (times > 1)
+                layout.set(minus1, 47);
+            if (times > 10)
+                layout.set(minus10, 48);
+            if (times < finalTimes)
+                layout.set(plus1,50);
+            if (times < finalTimes && times + 10 <= finalTimes) {
+                    layout.set(plus10, 51);
+            }
+            layout.set(Element.builder().item(ItemStack.builder().itemType(ItemTypes.ARROW).add(Keys.ROTATION, Rotations.BOTTOM).add(Keys.DISPLAY_NAME, TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.tradeInv.displayNames.inTradeMenuReturnDisplay)).build()).onClick(action -> {
+                times = 0;
+                finalTimes = 0;
+                finalTradeID = "";
+                mainTradingGui(player);
+            }).build(), 4);
 
             Page tradeGui = Page.builder().archetype(archetype).layout(layout.build()).property(title).build(plugin.getPluginContainer());
             try {
@@ -224,9 +273,11 @@ public class TradeCommand {
 
     private static int getMakeableTradesCount(Trade trade, Player player) {
         ArrayList<ItemStack> required = InventoryUtils.convertJsonArrayToItemArray(trade.getRequiredItems());
-        int max = 0;
+        AtomicInteger max = new AtomicInteger(1);
         for (ItemStack stack : required)
-            max = Math.min(max, (int) Math.floor(player.getInventory().queryAny(stack).peek().get().getQuantity() / (double) stack.getQuantity()));
-        return max;
+            player.getInventory().queryAny(stack).peek().ifPresent((stack1) -> {
+                max.set(Math.min(10000, (int) Math.floor(stack1.getQuantity() / (double) stack.getQuantity())));
+            });
+        return max.get();
     }
 }

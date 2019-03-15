@@ -123,7 +123,6 @@ public class ShadowTradeCommand {
                                        player.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(plugin.getConfigManager().getMessages().inventory.setupInv.tooManyItemsReply));
                                    }
                                }
-
                            });
                            Inventory given = givenInv.build(plugin);
                            HashMap<Integer, Inventory> slots = InventoryUtils.getMappedInventorySlots(given);
