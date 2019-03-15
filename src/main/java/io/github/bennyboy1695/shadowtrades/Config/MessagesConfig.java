@@ -62,10 +62,22 @@ public class MessagesConfig {
 
                 @Setting(value = "inTradeMenuReturnDisplayName", comment = "The display name of the item that returns you to the main menu when in a trade menu!")
                 public String inTradeMenuReturnDisplay = "&2Return to Main Menu!";
+
+                @Setting(value = "minusOneDisplay", comment = "The Display name for the minus 1 item!")
+                public String minusOneDisplay = "&cReduce by 1";
+
+                @Setting(value = "minusTenDisplay", comment = "The Display name for the minus 10 item!")
+                public String minusTenDisplay = "&cReduce by 10";
+
+                @Setting(value = "plusOneDisplay", comment = "The Display name for the plus 1 item!")
+                public String plusOneDisplay = "&eIncrease by 1";
+
+                @Setting(value = "plusTenDisplay", comment = "The Display name for the plus 10 item!")
+                public String plusTenDisplay = "&eIncrease by 10";
             }
 
             @Setting(value = "successfulTradeMessage", comment = "The message sent to the player when they have made a successful trade!")
-            public String successfulTradeMessage = "&2Successfully traded!";
+            public String successfulTradeMessage = "&2Successfully traded <count> times!";
 
             @Setting(value = "failedToGiveItemsMessage", comment = "The message sent to the player when they have made a successful trade, but the plugin couldn't give them their item's due to a lack of space!")
             public String failedToGiveItemsMessage = "&cYou didn't have enough space in your inventory for some of the item's! We have saved those item's and once you have enough space run the command &6/trade getitems &cto get the remaining item's!";
