@@ -32,6 +32,7 @@ import org.spongepowered.api.util.rotation.Rotations;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 
 public class TradeCommand {
 
@@ -154,6 +155,11 @@ public class TradeCommand {
             List<Text> lore = new ArrayList<>();
             ItemStack finisher;
             Element doTrade;
+            if (convertedGiven.stream().map(ItemStack::getType).allMatch(Predicate.isEqual(ItemTypes.COMMAND_BLOCK))) {
+                times = 1;
+                finalTimes = 1;
+                finalTradeID = tradeID;
+            }
             if (times > getMakeableTradesCount(trade, player) || times == 0 || !finalTradeID.equals(tradeID)) {
                 times = getMakeableTradesCount(trade, player);
                 finalTradeID = trade.getId();
@@ -168,14 +174,52 @@ public class TradeCommand {
                 doTrade = Element.builder().item(finisher).onClick(action -> {
                     int successCount = 0;
                     int failCount = 0;
-                    for (int i = 0; i < times; i++) {
-                        Tuple<Boolean, ArrayList<ItemStack>> tradeResult = doTrade(finalTrade, player);
-                        if (tradeResult.getFirst()) {
+                    if (convertedGiven.stream().map(ItemStack::getType).allMatch(Predicate.isEqual(ItemTypes.COMMAND_BLOCK))) {
+                        for (ItemStack commandBlock : convertedGiven) {
+                            if (commandBlock.get(Keys.DISPLAY_NAME).isPresent()) {
+                                String command = commandBlock.get(Keys.DISPLAY_NAME).get().toPlain();
+                                boolean returnRequired = false;
+                                if (command.contains("@u")) {
+                                    command = command.replace("@u", player.getUniqueId().toString());
+                                }
+                                if (command.contains("@p ")) {
+                                    command = command.replace("@p", player.getName());
+                                }
+                                if (command.contains("@pl ")) {
+                                    command = command.replace("@pl", player.getName().toLowerCase());
+                                }
+                                if (command.contains("@return")) {
+                                    returnRequired = true;
+                                    command = command.replace(" @return", "");
+                                }
+                                try {
+                                    if (!command.equals("")) {
+                                        Sponge.getCommandManager().process(Sponge.getServer().getConsole(), command);
+                                        for (ItemStack required : convertedRequired) {
+                                            if (player.getInventory().contains(required)) {
+                                                player.getInventory().queryAny(required).poll(required.getQuantity());
+                                            }
+                                            if (returnRequired) {
+                                                player.getInventory().offer(required);
+                                            }
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
                             successCount++;
-                        } else {
-                            failCount++;
-                            if (!tradeResult.getSecond().isEmpty())
-                                plugin.getSqlManager().addNewFailedTrade(player, tradeResult.getSecond());
+                        }
+                    } else {
+                        for (int i = 0; i < times; i++) {
+                            Tuple<Boolean, ArrayList<ItemStack>> tradeResult = doTrade(finalTrade, player);
+                            if (tradeResult.getFirst()) {
+                                successCount++;
+                            } else {
+                                failCount++;
+                                if (!tradeResult.getSecond().isEmpty())
+                                    plugin.getSqlManager().addNewFailedTrade(player, tradeResult.getSecond());
+                            }
                         }
                     }
                     if (successCount != 0) {
